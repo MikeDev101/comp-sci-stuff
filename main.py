@@ -15,7 +15,7 @@ clock = pygame.time.Clock()
 timer = 0
 timeTillNextTick = 0.8
 bkgColor = 0, 0, 0
-gfxMatrix = []
+gameBoard = []
 boxTypes = {0: {"isHead": False, "isBody": False, "consumable": False, "isWall": False},
             1: {"isHead": True, "isBody": True, "consumable": False, "isWall": False},
             2: {"isHead": False, "isBody": True, "consumable": False, "isWall": True},
@@ -76,48 +76,48 @@ class Snake:
                         a.append(3)
                     else:
                         a.append(0)
-            gfxMatrix.append(a)
+            gameBoard.append(a)
         print("[ i ] Done generating matrix.")
 
     @staticmethod
     def spawnRandApples(x):
-        global gfxMatrix
+        global gameBoard
         for y in range(x):
             randData = Snake.randNumbGen()
-            gfxMatrix[randData["y"]][randData["x"]] = 4
+            gameBoard[randData["y"]][randData["x"]] = 4
             print("[ i ] Generated apple at (" + str(randData["x"]) + ", " + str(randData["y"]) + ").")
 
     @staticmethod
     def randNumbGen():
-        x = randint(1, (len(gfxMatrix[0]) - 2))
-        y = randint(1, (len(gfxMatrix) - 2))
+        x = randint(1, (len(gameBoard[0]) - 2))
+        y = randint(1, (len(gameBoard) - 2))
         return dict(y=y, x=x)
 
     @staticmethod
     def draw():
-        for y in range(len(gfxMatrix)):
-            for x in range(len(gfxMatrix[y])):
+        for y in range(len(gameBoard)):
+            for x in range(len(gameBoard[y])):
                 rect = ((x * 25), (y * 25), 25, 25)
-                pygame.draw.rect(background, colors[gfxMatrix[y][x]], rect)
+                pygame.draw.rect(background, colors[gameBoard[y][x]], rect)
 
     @staticmethod
     def spawnSnake(size):
         global snakePathData
         snakePathData = []
-        index = len(gfxMatrix)//2
-        index2 = len(gfxMatrix[index])//2
-        gfxMatrix[index][index2] = 1
+        index = len(gameBoard) // 2
+        index2 = len(gameBoard[index]) // 2
+        gameBoard[index][index2] = 1
         snakePathData.append({"x": index2, "y": index})
         for x in range(size-1):
-            gfxMatrix[(index+(x+1))][index2] = 2
+            gameBoard[(index + (x + 1))][index2] = 2
             snakePathData.append({"x": index2, "y": (index+(x+1))})
 
     @staticmethod
     def locateHead():
         rt = {"x": -1, "y": -1}
-        for y in range(len(gfxMatrix)):
-            for x in range(len(gfxMatrix[y])):
-                if gfxMatrix[y][x] == 1:
+        for y in range(len(gameBoard)):
+            for x in range(len(gameBoard[y])):
+                if gameBoard[y][x] == 1:
                     rt["x"] = x
                     rt["y"] = y
                     return rt
@@ -125,9 +125,9 @@ class Snake:
     @staticmethod
     def locateBodyBlocks():
         rt = []
-        for y in range(len(gfxMatrix)):
-            for x in range(len(gfxMatrix[y])):
-                if gfxMatrix[y][x] == 2:
+        for y in range(len(gameBoard)):
+            for x in range(len(gameBoard[y])):
+                if gameBoard[y][x] == 2:
                     rt.append({"x": x, "y": y})
         return rt
 
@@ -136,71 +136,71 @@ class Snake:
         global snakeDirection, score, timeTillNextTick, gameOver, snakePathData
         headLocation = Snake.locateHead()
         # Replace current location with a body block
-        gfxMatrix[headLocation["y"]][headLocation["x"]] = 2
+        gameBoard[headLocation["y"]][headLocation["x"]] = 2
         # Update body
-        gfxMatrix[snakePathData[len(snakePathData) - 1]["y"]][snakePathData[len(snakePathData) - 1]["x"]] = 0
+        gameBoard[snakePathData[len(snakePathData) - 1]["y"]][snakePathData[len(snakePathData) - 1]["x"]] = 0
         snakePathData.pop(len(snakePathData) - 1)
         snakePathData = Snake.locateBodyBlocks()
         # Process input and modify data to represent changes
         if snakeDirection == 0:  # Snake is facing upwards
             # Check for objects
-            if gfxMatrix[headLocation["y"] - 1][headLocation["x"]] == 3 or gfxMatrix[headLocation["y"] - 1][headLocation["x"]] == 2:  # Wall
+            if gameBoard[headLocation["y"] - 1][headLocation["x"]] == 3 or gameBoard[headLocation["y"] - 1][headLocation["x"]] == 2:  # Wall
                 gameOver = True
                 print("Game over!")
                 return
-            elif gfxMatrix[headLocation["y"] - 1][headLocation["x"]] == 4:  # Apple
+            elif gameBoard[headLocation["y"] - 1][headLocation["x"]] == 4:  # Apple
                 score += 100
                 print("Yummy!")
                 if not timeTillNextTick <= 0.1:
                     timeTillNextTick -= 0.025
             headLocation["y"] -= 1
             # Replace new head location with a head block
-            gfxMatrix[headLocation["y"]][headLocation["x"]] = 1
+            gameBoard[headLocation["y"]][headLocation["x"]] = 1
 
         elif snakeDirection == 1:  # Snake is facing downwards
             # Check for objects
-            if gfxMatrix[headLocation["y"] + 1][headLocation["x"]] == 3 or gfxMatrix[headLocation["y"] + 1][headLocation["x"]] == 2:  # Wall
+            if gameBoard[headLocation["y"] + 1][headLocation["x"]] == 3 or gameBoard[headLocation["y"] + 1][headLocation["x"]] == 2:  # Wall
                 gameOver = True
                 print("Game over!")
                 return
-            elif gfxMatrix[headLocation["y"] + 1][headLocation["x"]] == 4:  # Apple
+            elif gameBoard[headLocation["y"] + 1][headLocation["x"]] == 4:  # Apple
                 score += 100
                 print("Yummy!")
                 if not timeTillNextTick <= 0.1:
                     timeTillNextTick -= 0.025
             headLocation["y"] += 1
             # Replace new head location with a head block
-            gfxMatrix[headLocation["y"]][headLocation["x"]] = 1
+            gameBoard[headLocation["y"]][headLocation["x"]] = 1
 
         elif snakeDirection == 2:  # Snake is facing right
             # Check for objects
-            if gfxMatrix[headLocation["y"]][headLocation["x"] + 1] == 3 or gfxMatrix[headLocation["y"]][headLocation["x"] + 1] == 2:  # Wall
+            if gameBoard[headLocation["y"]][headLocation["x"] + 1] == 3 or gameBoard[headLocation["y"]][headLocation["x"] + 1] == 2:  # Wall
                 gameOver = True
                 print("Game over!")
                 return
-            elif gfxMatrix[headLocation["y"]][headLocation["x"] + 1] == 4:  # Apple
+            elif gameBoard[headLocation["y"]][headLocation["x"] + 1] == 4:  # Apple
                 score += 100
                 print("Yummy!")
                 if not timeTillNextTick <= 0.1:
                     timeTillNextTick -= 0.025
             headLocation["x"] += 1
             # Replace new head location with a head block
-            gfxMatrix[headLocation["y"]][headLocation["x"]] = 1
+            gameBoard[headLocation["y"]][headLocation["x"]] = 1
 
         elif snakeDirection == 3:  # Snake is facing left
             # Check for objects
-            if gfxMatrix[headLocation["y"]][headLocation["x"] - 1] == 3 or gfxMatrix[headLocation["y"]][headLocation["x"] - 1] == 2:  # Wall
+            if gameBoard[headLocation["y"]][headLocation["x"] - 1] == 3 or gameBoard[headLocation["y"]][headLocation["x"] - 1] == 2:  # Wall
                 gameOver = True
                 print("Game over!")
                 return
-            elif gfxMatrix[headLocation["y"]][headLocation["x"] - 1] == 4:  # Apple
+            elif gameBoard[headLocation["y"]][headLocation["x"] - 1] == 4:  # Apple
                 score += 100
                 print("Yummy!")
                 if not timeTillNextTick <= 0.1:
                     timeTillNextTick -= 0.025
             headLocation["x"] -= 1
             # Replace new head location with a head block
-            gfxMatrix[headLocation["y"]][headLocation["x"]] = 1
+            gameBoard[headLocation["y"]][headLocation["x"]] = 1
 
 
 class Graphics:
