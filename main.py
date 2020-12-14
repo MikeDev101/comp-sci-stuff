@@ -16,12 +16,6 @@ timer = 0
 timeTillNextTick = 0.8
 bkgColor = 0, 0, 0
 gameBoard = []
-boxTypes = {0: {"isHead": False, "isBody": False, "consumable": False, "isWall": False},
-            1: {"isHead": True, "isBody": True, "consumable": False, "isWall": False},
-            2: {"isHead": False, "isBody": True, "consumable": False, "isWall": True},
-            3: {"isHead": False, "isBody": False, "consumable": False, "isWall": True},
-            4: {"isHead": False, "isBody": False, "consumable": True, "isWall": False}}
-
 colors = {0: (255, 255, 255), 3: (153, 71, 253), 2: (39, 78, 19), 1: (6, 246, 45), 4: (255, 45, 3)}
 snakePathData = []
 snakeDirection = 0  # 0 = Up, 1 = Down, 2 = Right, 3 = Left
