@@ -9,15 +9,16 @@ import threading
 from random import randint  # Random numb. generator
 
 # Configure initial values
-global snakePathData, snakeDirection, score, gameOver, timer
+global snakeData, snakeDirection, score, gameOver, timer, Snake, Graphics
 
 clock = pygame.time.Clock()
 timer = 0
 timeTillNextTick = 0.8
+timeTillNextAppleSpawn = 1.0
 bkgColor = 0, 0, 0
 gameBoard = []
 colors = {0: (255, 255, 255), 3: (153, 71, 253), 2: (39, 78, 19), 1: (6, 246, 45), 4: (255, 45, 3)}
-snakePathData = []
+snakeData = []
 snakeDirection = 0  # 0 = Up, 1 = Down, 2 = Right, 3 = Left
 score = 0
 gameOver = False
@@ -93,109 +94,85 @@ class Snake:
             for x in range(len(gameBoard[y])):
                 rect = ((x * 25), (y * 25), 25, 25)
                 pygame.draw.rect(background, colors[gameBoard[y][x]], rect)
+        for z in range(len(snakeData)):
+            x = snakeData[z]["x"]
+            y = snakeData[z]["y"]
+            rect = ((x * 25), (y * 25), 25, 25)
+            if z == 0:
+                pygame.draw.rect(background, colors[1], rect)
+            else:
+                pygame.draw.rect(background, colors[2], rect)
 
     @staticmethod
     def spawnSnake(size):
-        global snakePathData
-        snakePathData = []
+        global snakeData
+        snakeData = []
         index = len(gameBoard) // 2
         index2 = len(gameBoard[index]) // 2
-        gameBoard[index][index2] = 1
-        snakePathData.append({"x": index2, "y": index})
+        # gameBoard[index][index2] = 1
+        snakeData.append({"x": index2, "y": index})
         for x in range(size-1):
-            gameBoard[(index + (x + 1))][index2] = 2
-            snakePathData.append({"x": index2, "y": (index+(x+1))})
+            # gameBoard[(index + (x + 1))][index2] = 2
+            snakeData.append({"x": index2, "y": (index + (x + 1))})
 
     @staticmethod
-    def locateHead():
-        rt = {"x": -1, "y": -1}
-        for y in range(len(gameBoard)):
-            for x in range(len(gameBoard[y])):
-                if gameBoard[y][x] == 1:
-                    rt["x"] = x
-                    rt["y"] = y
-                    return rt
-
-    @staticmethod
-    def locateBodyBlocks():
-        rt = []
-        for y in range(len(gameBoard)):
-            for x in range(len(gameBoard[y])):
-                if gameBoard[y][x] == 2:
-                    rt.append({"x": x, "y": y})
-        return rt
+    def checkCollisionsWithBody(x, y):
+        global snakeData
+        for index in range(len(snakeData)):
+            if not index == 0:  # Ignore head
+                if snakeData[index]["x"] == x and snakeData[index]["y"] == y:
+                    return index
+        index = -1
+        return index
 
     @staticmethod
     def processBody():
-        global snakeDirection, score, timeTillNextTick, gameOver, snakePathData
-        headLocation = Snake.locateHead()
-        # Replace current location with a body block
-        gameBoard[headLocation["y"]][headLocation["x"]] = 2
-        # Update body
-        gameBoard[snakePathData[len(snakePathData) - 1]["y"]][snakePathData[len(snakePathData) - 1]["x"]] = 0
-        snakePathData.pop(len(snakePathData) - 1)
-        snakePathData = Snake.locateBodyBlocks()
-        # Process input and modify data to represent changes
-        if snakeDirection == 0:  # Snake is facing upwards
-            # Check for objects
-            if gameBoard[headLocation["y"] - 1][headLocation["x"]] == 3 or gameBoard[headLocation["y"] - 1][headLocation["x"]] == 2:  # Wall
-                gameOver = True
-                print("Game over!")
-                return
-            elif gameBoard[headLocation["y"] - 1][headLocation["x"]] == 4:  # Apple
-                score += 100
-                print("Yummy!")
-                if not timeTillNextTick <= 0.1:
-                    timeTillNextTick -= 0.025
-            headLocation["y"] -= 1
-            # Replace new head location with a head block
-            gameBoard[headLocation["y"]][headLocation["x"]] = 1
+        global snakeDirection, score, timeTillNextTick, gameOver, snakeData, gameBoard
 
-        elif snakeDirection == 1:  # Snake is facing downwards
-            # Check for objects
-            if gameBoard[headLocation["y"] + 1][headLocation["x"]] == 3 or gameBoard[headLocation["y"] + 1][headLocation["x"]] == 2:  # Wall
-                gameOver = True
-                print("Game over!")
-                return
-            elif gameBoard[headLocation["y"] + 1][headLocation["x"]] == 4:  # Apple
-                score += 100
-                print("Yummy!")
-                if not timeTillNextTick <= 0.1:
-                    timeTillNextTick -= 0.025
-            headLocation["y"] += 1
-            # Replace new head location with a head block
-            gameBoard[headLocation["y"]][headLocation["x"]] = 1
+        # Locate head of snake
+        headX = snakeData[0]["x"]
+        headY = snakeData[0]["y"]
 
-        elif snakeDirection == 2:  # Snake is facing right
-            # Check for objects
-            if gameBoard[headLocation["y"]][headLocation["x"] + 1] == 3 or gameBoard[headLocation["y"]][headLocation["x"] + 1] == 2:  # Wall
-                gameOver = True
-                print("Game over!")
-                return
-            elif gameBoard[headLocation["y"]][headLocation["x"] + 1] == 4:  # Apple
-                score += 100
-                print("Yummy!")
-                if not timeTillNextTick <= 0.1:
-                    timeTillNextTick -= 0.025
-            headLocation["x"] += 1
-            # Replace new head location with a head block
-            gameBoard[headLocation["y"]][headLocation["x"]] = 1
+        # Update body data
+        snakeData.insert(1, {"x": headX, "y": headY})
+        del snakeData[len(snakeData)-1]
 
-        elif snakeDirection == 3:  # Snake is facing left
-            # Check for objects
-            if gameBoard[headLocation["y"]][headLocation["x"] - 1] == 3 or gameBoard[headLocation["y"]][headLocation["x"] - 1] == 2:  # Wall
-                gameOver = True
-                print("Game over!")
-                return
-            elif gameBoard[headLocation["y"]][headLocation["x"] - 1] == 4:  # Apple
-                score += 100
-                print("Yummy!")
-                if not timeTillNextTick <= 0.1:
-                    timeTillNextTick -= 0.025
-            headLocation["x"] -= 1
-            # Replace new head location with a head block
-            gameBoard[headLocation["y"]][headLocation["x"]] = 1
+        # Update position based upon current input
+        if snakeDirection == 0:  # up
+            headY -= 1
+        elif snakeDirection == 1:  # down
+            headY += 1
+        elif snakeDirection == 2:  # right
+            headX += 1
+        elif snakeDirection == 3:  # left
+            headX -= 1
+        snakeData[0]["x"] = headX
+        snakeData[0]["y"] = headY
 
+        if gameBoard[headY][headX] == 0:  # Air, do nothing
+            pass
+        if gameBoard[headY][headX] == 3:  # Wall, game over
+            gameOver = True
+            print("Game over...")
+            return
+        if gameBoard[headY][headX] == 4:  # Apple, increase score
+            score += 100
+            if not timeTillNextTick <= 0.1:
+                timeTillNextTick -= 0.01
+            print("Yummy!")
+            gameBoard[headY][headX] = 0
+            # Create new body item
+            snakeData.insert(len(snakeData), {"x": -1, "y": -1})  # Spawn new object off screen
+
+        if not Snake.checkCollisionsWithBody(headX, headY) == -1:  # No collisions if -1, else game over
+            gameOver = True
+            print("Game over...")
+            return
+
+        # Redraw game board
+        Snake.draw()
+        Graphics.printText(str("Score:" + str(score + (math.ceil(timer)))), 25, 5, 25, (255, 255, 0))
+        Graphics.render()
 
 class Graphics:
     def __init__(self):
@@ -218,7 +195,7 @@ class Graphics:
 
 
 def graphicsThread():
-    global gameOver, timeTillNextTick, timer, score
+    global gameOver, timeTillNextTick, timer, score, timeTillNextAppleSpawn
     while True:
         if not gameOver:
             milli = clock.tick()
@@ -231,7 +208,13 @@ def graphicsThread():
             if (round(timer*100)/100) > timeTillNextTick:
                 Snake.processBody()
             time.sleep(timeTillNextTick)
+            if (round(timer*100)/100) > timeTillNextAppleSpawn:
+                Snake.spawnRandApples(1)
+                timeTillNextAppleSpawn += 5
         else:
+            Snake.draw()
+            Graphics.printText(str("Game over! Your score was: " + str(score + (math.ceil(timer))) + "! Better luck next time..."), 25, 5, 25, (255, 255, 255))
+            Graphics.render()
             break
 
 
@@ -248,7 +231,7 @@ if __name__ == '__main__':
 
     # Run main thread
     Snake.spawnMatrix(32, 24)  # Generate game matrix
-    Snake.spawnRandApples(5)  # Spawn initial apples
+    Snake.spawnRandApples(2)  # Spawn initial apples
     Snake.spawnSnake(5)  # Generate the snake
 
     # Spawn graphics thread
